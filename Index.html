@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orario Scolastico Dinamico - 3AI</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      overflow: hidden;
+      background-color: #1a1a2e;
+      color: white;
+    }
+
+    .screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+      transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.8s ease;
+    }
+
+    /* Stile per le materie diurne/lezioni */
+    #screen-class {
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      z-index: 1;
+    }
+
+    /* Stile per fine lezioni / intervallo */
+    #screen-off {
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      z-index: 2;
+      opacity: 0;
+      transform: translateY(100%);
+    }
+
+    .subject {
+      font-size: 3rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .room {
+      font-size: 1.8rem;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 10px 25px;
+      border-radius: 30px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(5px);
+    }
+
+    .day-info {
+      font-size: 1.4rem;
+      opacity: 0.9;
+      margin-bottom: 5px;
+    }
+
+    #clock {
+      margin-top: 30px;
+      font-size: 1.2rem;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 10px 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .active {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Schermata Lezione -->
+  <div id="screen-class" class="screen">
+    <div class="day-info" id="current-day-time">Lunedì - Ore 08:00</div>
+    <div class="subject" id="subject-name">Materia</div>
+    <div class="room" id="room-name">Aula</div>
+    <div id="clock">00:00:00</div>
+  </div>
+
+  <!-- Schermata Fuori Orario / Nessuna Lezione -->
+  <div id="screen-off" class="screen">
+    <div class="subject">Lezioni Terminate 🌙</div>
+    <div class="room">Nessuna lezione in corso</div>
+    <div id="clock-off">00:00:00</div>
+  </div>
+
+  <script>
+    // Tabella Orario della classe 3AI inserita dall'immagine
+    const schedule = {
+      1: { // Lunedì
+        8: { subject: "INGLESE", room: "BRIXTON" },
+        9: { subject: "SCIENZE MOTORIE", room: "PALESTRA" },
+        10: { subject: "MATEMATICA", room: "LIMITE" },
+        11: { subject: "INFORMATICA", room: "LAB. INFO 5" },
+        12: { subject: "INFORMATICA", room: "LAB. INFO 5" },
+        13: { subject: "TECN. INFORMATICHE", room: "AULA 253" }
+      },
+      2: { // Martedì
+        8: { subject: "SISTEMI E RETI", room: "LAB. INFO 8" },
+        9: { subject: "SISTEMI E RETI", room: "LAB. INFO 8" },
+        10: { subject: "INGLESE", room: "WIMBLEDON" },
+        11: { subject: "TELECOMUNICAZIONI", room: "AULA 295" },
+        12: { subject: "ITALIANO", room: "MARGHERITA HACK" },
+        13: { subject: "INFORMATICA", room: "LAB. INFO 5" }
+      },
+      3: { // Mercoledì
+        8: { subject: "TECN. INFORMATICHE", room: "LAB. INFO 5" },
+        9: { subject: "MATEMATICA", room: "LIMITE" },
+        10: { subject: "SISTEMI E RETI", room: "AULA 248" },
+        11: { subject: "ITALIANO", room: "MARGHERITA HACK" },
+        12: { subject: "INFORMATICA", room: "AULA 159" },
+        13: { subject: "STORIA", room: "MARGHERITA HACK" }
+      },
+      4: { // Giovedì
+        8: { subject: "MATEMATICA", room: "LIMITE" },
+        9: { subject: "TECN. INFORMATICHE", room: "AULA 295" },
+        10: { subject: "IRC", room: "DON LORENZO MILANI" },
+        11: { subject: "SCIENZE MOTORIE", room: "PALESTRA" },
+        12: { subject: "INGLESE", room: "BRIXTON" }
+      },
+      5: { // Venerdì
+        8: { subject: "INFORMATICA", room: "AULA 236" },
+        9: { subject: "INFORMATICA", room: "AULA 236" },
+        10: { subject: "ITALIANO", room: "GRAZIA DELEDDA" },
+        11: { subject: "MATEMATICA", room: "INTEGRALE" },
+        12: { subject: "SISTEMI E RETI", room: "AULA 248" }
+      },
+      6: { // Sabato
+        8: { subject: "TELECOMUNICAZIONI", room: "LAB. ELETTRONICA" },
+        9: { subject: "TELECOMUNICAZIONI", room: "LAB. ELETTRONICA" },
+        10: { subject: "INFORMATICA", room: "AULA 159" },
+        11: { subject: "STORIA", room: "GRAZIA DELEDDA" }
+      }
+    };
+
+    const daysOfWeek = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
+
+    function updateScheduleDisplay() {
+      const now = new Date();
+      const day = now.getDay();
+      const hour = now.getHours();
+
+      const timeString = now.toLocaleTimeString('it-IT');
+      document.getElementById('clock').textContent = timeString;
+      document.getElementById('clock-off').textContent = timeString;
+
+      const daySchedule = schedule[day];
+      const screenOff = document.getElementById('screen-off');
+
+      if (daySchedule && daySchedule[hour]) {
+        const currentLesson = daySchedule[hour];
+        document.getElementById('current-day-time').textContent = `${daysOfWeek[day]} - Ore ${hour}:00`;
+        document.getElementById('subject-name').textContent = currentLesson.subject;
+        document.getElementById('room-name').textContent = currentLesson.room;
+        screenOff.classList.remove('active');
+      } else {
+        screenOff.classList.add('active');
+      }
+    }
+
+    // Aggiornamento ogni secondo
+    setInterval(updateScheduleDisplay, 1000);
+    updateScheduleDisplay();
+  </script>
+</body>
+</html>
