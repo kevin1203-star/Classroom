@@ -1,10 +1,26 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Orario Scolastico Dinamico - 3AI</title>
+
   <style>
+    :root {
+      --bg: #eef1f5;
+      --bg-elevated: #ffffff;
+      --surface: #f7f8fa;
+      --border: #d7dce3;
+      --text-primary: #1f2937;
+      --text-secondary: #4b5563;
+      --text-muted: #6b7280;
+      --accent: #4f6d8a;
+      --accent-hover: #3b5773;
+      --success: #4c7c5f;
+      --danger: #a35757;
+      --shadow: 0 1px 2px rgba(31, 41, 55, 0.06), 0 4px 12px rgba(31, 41, 55, 0.08);
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -13,158 +29,383 @@
     }
 
     body {
+      background-color: var(--bg);
+      color: var(--text-primary);
       overflow: hidden;
-      background-color: #1a1a2e;
-      color: white;
     }
 
     .screen {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
+      inset: 0;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       text-align: center;
-      padding: 20px;
-      transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.8s ease;
+      padding: 24px;
+      transition: transform 0.7s ease, opacity 0.7s ease;
     }
 
-    /* Schermata di lezione attiva */
     #screen-class {
-      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      background-color: #e3e9f0;
       z-index: 1;
     }
 
-    /* Schermata fuoriorario / intervallo */
     #screen-off {
-      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      background-color: #eceff3;
       z-index: 2;
       opacity: 0;
       transform: translateY(100%);
-    }
-
-    .subject {
-      font-size: 3rem;
-      font-weight: bold;
-      margin-bottom: 10px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .room {
-      font-size: 1.8rem;
-      background: rgba(255, 255, 255, 0.15);
-      padding: 10px 25px;
-      border-radius: 30px;
-      margin-bottom: 20px;
-      backdrop-filter: blur(5px);
-    }
-
-    .day-info {
-      font-size: 1.4rem;
-      opacity: 0.9;
-      margin-bottom: 5px;
-    }
-
-    .clock {
-      margin-top: 30px;
-      font-size: 1.2rem;
-      background: rgba(0, 0, 0, 0.3);
-      padding: 10px 20px;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .active {
       opacity: 1 !important;
       transform: translateY(0) !important;
     }
+
+    .day-info {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      letter-spacing: 0.2px;
+    }
+
+    .subject {
+      font-size: 34px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+      letter-spacing: 0.3px;
+    }
+
+    .room {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--accent);
+      background-color: var(--bg-elevated);
+      border: 1px solid var(--border);
+      padding: 9px 18px;
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+
+    .room-location {
+      font-size: 14px;
+      color: var(--text-secondary);
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      padding: 7px 14px;
+      border-radius: 9px;
+      margin-bottom: 14px;
+      max-width: 420px;
+    }
+
+    .room-image {
+      width: 210px;
+      height: 130px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background-color: var(--surface);
+      margin-bottom: 14px;
+    }
+
+    .clock {
+      font-size: 14px;
+      color: var(--text-muted);
+      background-color: var(--bg-elevated);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 9px;
+    }
+
+    .nav-controls {
+      position: absolute;
+      top: 14px;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      pointer-events: auto;
+    }
+
+    .btn {
+      background-color: var(--bg-elevated);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      padding: 7px 12px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .btn:hover {
+      background-color: #f5f7fa;
+      border-color: #c6ccd4;
+    }
+
+    .btn-picker {
+      background-color: #e8eef5;
+      border-color: #c9d3df;
+      color: #25374a;
+    }
+
+    .btn-live {
+      background-color: #e4f0e8;
+      border-color: #c5d9cd;
+      color: #244232;
+      display: none;
+    }
+
+    .btn-live:hover {
+      background-color: #d9eae0;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(31, 41, 55, 0.35);
+      z-index: 100;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      background-color: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+      width: 320px;
+      text-align: left;
+    }
+
+    .modal-content h3 {
+      font-size: 16px;
+      color: var(--text-primary);
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .picker-section {
+      margin-bottom: 14px;
+    }
+
+    .picker-section label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .picker-select {
+      width: 100%;
+      padding: 9px 11px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background-color: var(--surface);
+      color: var(--text-primary);
+      font-size: 14px;
+      outline: none;
+    }
+
+    .picker-select:focus {
+      border-color: var(--accent);
+    }
+
+    .confirm-btn {
+      width: 100%;
+      background-color: var(--success);
+      color: #ffffff;
+      border: none;
+      padding: 10px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 4px;
+      transition: background-color 0.2s ease;
+    }
+
+    .confirm-btn:hover {
+      background-color: #3d664d;
+    }
+
+    .close-btn {
+      width: 100%;
+      background-color: var(--surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      padding: 8px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 8px;
+      transition: background-color 0.2s ease;
+    }
+
+    .close-btn:hover {
+      background-color: #f0f2f5;
+    }
   </style>
 </head>
-<body>
 
-  <!-- Schermata Lezione -->
+<body>
+  <div class="nav-controls">
+    <div class="button-group">
+      <button class="btn btn-picker" onclick="openModal()">📅 Scegli Giorno e Ora</button>
+      <button class="btn" onclick="changeHour(-1)">◀ Ora Prec.</button>
+      <button class="btn" onclick="changeHour(1)">Ora Succ. ▶</button>
+    </div>
+    <button class="btn btn-live" id="btn-live" onclick="resetToLive()">⏱ Ora In Tempo Reale</button>
+  </div>
+
+  <div class="modal-overlay" id="dayModal">
+    <div class="modal-content">
+      <h3>Seleziona Giorno e Ora</h3>
+
+      <div class="picker-section">
+        <label for="select-day">Giorno:</label>
+        <select id="select-day" class="picker-select">
+          <option value="1">Lunedì</option>
+          <option value="2">Martedì</option>
+          <option value="3">Mercoledì</option>
+          <option value="4">Giovedì</option>
+          <option value="5">Venerdì</option>
+          <option value="6">Sabato</option>
+        </select>
+      </div>
+
+      <div class="picker-section">
+        <label for="select-hour">Ora di lezione:</label>
+        <select id="select-hour" class="picker-select">
+          <option value="8">1ª Ora (08:00)</option>
+          <option value="9">2ª Ora (09:00)</option>
+          <option value="10">3ª Ora (10:00)</option>
+          <option value="11">4ª Ora (11:00)</option>
+          <option value="12">5ª Ora (12:00)</option>
+          <option value="13">6ª Ora (13:00)</option>
+        </select>
+      </div>
+
+      <button class="confirm-btn" onclick="confirmSelection()">Applica</button>
+      <button class="close-btn" onclick="closeModal()">Annulla</button>
+    </div>
+  </div>
+
   <div id="screen-class" class="screen">
     <div class="day-info" id="current-day-time">Inizializzazione...</div>
     <div class="subject" id="subject-name">---</div>
     <div class="room" id="room-name">---</div>
+    <div class="room-location" id="room-location">📍 ---</div>
+    <img id="room-image" class="room-image" src="" alt="Foto Aula" />
     <div class="clock" id="clock-class">--:--:--</div>
   </div>
 
-  <!-- Schermata Fuori Orario -->
   <div id="screen-off" class="screen">
-    <div class="subject">Lezioni Terminate 🌙</div>
-    <div class="room">Nessuna lezione in corso</div>
+    <div class="day-info" id="off-day-time">--</div>
+    <div class="subject" id="off-subject-name">Lezioni Terminate 🌙</div>
+    <div class="room" id="off-room-name">Nessuna lezione in corso</div>
     <div class="clock" id="clock-off">--:--:--</div>
   </div>
 
   <script>
     const schedule = {
-      1: { // Lunedì
-        8: { subject: "INGLESE", room: "BRIXTON" },
-        9: { subject: "SCIENZE MOTORIE", room: "PALESTRA" },
-        10: { subject: "MATEMATICA", room: "LIMITE" },
-        11: { subject: "INFORMATICA", room: "LAB. INFO 5" },
-        12: { subject: "INFORMATICA", room: "LAB. INFO 5" },
-        13: { subject: "TECN. INFORMATICHE", room: "AULA 253" }
+      1: {
+        8: { subject: "INGLESE", room: "BRIXTON", location: "📍 Piano Primo - Corridoio blu (Aula 158)", image: "http://79.2.211.87:9090/castelli/aule/foto/BRIXTON.jpg" },
+        9: { subject: "SCIENZE MOTORIE", room: "PALESTRA", location: "📍 Consultare la tabella Oraria delle palestre", image: "http://79.2.211.87:9090/castelli/aule/foto/PALESTRA.jpg" },
+        10: { subject: "MATEMATICA", room: "LIMITE", location: "📍 Piano Rialzato - Corridoio blu (Aula 077)", image: "http://79.2.211.87:9090/castelli/aule/foto/LIMITE.jpg" },
+        11: { subject: "INFORMATICA", room: "LAB. INFO 5", location: "📍 Corridoio giallo primo piano (Lab. Info 5)", image: "http://79.2.211.87:9090/castelli/aule/foto/INFO5.jpg" },
+        12: { subject: "INFORMATICA", room: "LAB. INFO 5", location: "📍 Corridoio giallo primo piano (Lab. Info 5)", image: "http://79.2.211.87:9090/castelli/aule/foto/INFO5.jpg" },
+        13: { subject: "TECN. INFORMATICHE", room: "AULA 253", location: "📍 Piano Secondo - Corridoio verde (Aula 253)", image: "http://79.2.211.87:9090/castelli/aule/foto/253.jpg" }
       },
-      2: { // Martedì
-        8: { subject: "SISTEMI E RETI", room: "LAB. INFO 8" },
-        9: { subject: "SISTEMI E RETI", room: "LAB. INFO 8" },
-        10: { subject: "INGLESE", room: "WIMBLEDON" },
-        11: { subject: "TELECOMUNICAZIONI", room: "AULA 295" },
-        12: { subject: "ITALIANO", room: "MARGHERITA HACK" },
-        13: { subject: "INFORMATICA", room: "LAB. INFO 5" }
+      2: {
+        8: { subject: "SISTEMI E RETI", room: "LAB. INFO 8", location: "📍 Corridoio giallo primo piano (Lab. Info 8)", image: "http://79.2.211.87:9090/castelli/aule/foto/INFO8.jpg" },
+        9: { subject: "SISTEMI E RETI", room: "LAB. INFO 8", location: "📍 Corridoio giallo primo piano (Lab. Info 8)", image: "http://79.2.211.87:9090/castelli/aule/foto/INFO8.jpg" },
+        10: { subject: "INGLESE", room: "WIMBLEDON", location: "📍 Piano Primo - Corridoio blu (Aula 182)", image: "http://79.2.211.87:9090/castelli/aule/foto/WIMBLEDON.jpg" },
+        11: { subject: "TELECOMUNICAZIONI", room: "AULA 295", location: "📍 Piano Secondo - Satellite (Aula 295)", image: "http://79.2.211.87:9090/castelli/aule/foto/295.jpg" },
+        12: { subject: "ITALIANO", room: "MARGHERITA HACK", location: "📍 Piano Primo - Corridoio arancione (Aula 169)", image: "http://79.2.211.87:9090/castelli/aule/foto/HACK.jpg" },
+        13: { subject: "INFORMATICA", room: "LAB. INFO 5", location: "📍 Corridoio giallo primo piano (Lab. Info 5)", image: "http://79.2.211.87:9090/castelli/aule/foto/INFO5.jpg" }
       },
-      3: { // Mercoledì
-        8: { subject: "TECN. INFORMATICHE", room: "LAB. INFO 5" },
-        9: { subject: "MATEMATICA", room: "LIMITE" },
-        10: { subject: "SISTEMI E RETI", room: "AULA 248" },
-        11: { subject: "ITALIANO", room: "MARGHERITA HACK" },
-        12: { subject: "INFORMATICA", room: "AULA 159" },
-        13: { subject: "STORIA", room: "MARGHERITA HACK" }
+      3: {
+        8: { subject: "TECN. INFORMATICHE", room: "LAB. INFO 5", location: "📍 Corridoio giallo primo piano (Lab. Info 5)", image: "http://79.2.211.87:9090/castelli/aule/foto/INFO5.jpg" },
+        9: { subject: "MATEMATICA", room: "LIMITE", location: "📍 Piano Rialzato - Corridoio blu (Aula 077)", image: "http://79.2.211.87:9090/castelli/aule/foto/LIMITE.jpg" },
+        10: { subject: "SISTEMI E RETI", room: "AULA 248", location: "📍 Piano Secondo - Corridoio verde (Aula 248)", image: "http://79.2.211.87:9090/castelli/aule/foto/248.jpg" },
+        11: { subject: "ITALIANO", room: "MARGHERITA HACK", location: "📍 Piano Primo - Corridoio arancione (Aula 169)", image: "http://79.2.211.87:9090/castelli/aule/foto/HACK.jpg" },
+        12: { subject: "INFORMATICA", room: "AULA 159", location: "📍 Piano Primo - Corridoio verde (Aula 159)", image: "http://79.2.211.87:9090/castelli/aule/foto/159.jpg" },
+        13: { subject: "STORIA", room: "MARGHERITA HACK", location: "📍 Piano Primo - Corridoio arancione (Aula 169)", image: "http://79.2.211.87:9090/castelli/aule/foto/HACK.jpg" }
       },
-      4: { // Giovedì
-        8: { subject: "MATEMATICA", room: "LIMITE" },
-        9: { subject: "TECN. INFORMATICHE", room: "AULA 295" },
-        10: { subject: "IRC", room: "DON LORENZO MILANI" },
-        11: { subject: "SCIENZE MOTORIE", room: "PALESTRA" },
-        12: { subject: "INGLESE", room: "BRIXTON" }
+      4: {
+        8: { subject: "MATEMATICA", room: "LIMITE", location: "📍 Piano Rialzato - Corridoio blu (Aula 077)", image: "http://79.2.211.87:9090/castelli/aule/foto/LIMITE.jpg" },
+        9: { subject: "TECN. INFORMATICHE", room: "AULA 295", location: "📍 Piano Secondo - Satellite (Aula 295)", image: "http://79.2.211.87:9090/castelli/aule/foto/295.jpg" },
+        10: { subject: "IRC", room: "DON LORENZO MILANI", location: "📍 Piano Rialzato - Corridoio Sud (Aula 068)", image: "http://79.2.211.87:9090/castelli/aule/foto/MILANI.jpg" },
+        11: { subject: "SCIENZE MOTORIE", room: "PALESTRA", location: "📍 Consultare la tabella Oraria delle palestre", image: "http://79.2.211.87:9090/castelli/aule/foto/PALESTRA.jpg" },
+        12: { subject: "INGLESE", room: "BRIXTON", location: "📍 Piano Primo - Corridoio blu (Aula 158)", image: "http://79.2.211.87:9090/castelli/aule/foto/BRIXTON.jpg" }
       },
-      5: { // Venerdì
-        8: { subject: "INFORMATICA", room: "AULA 236" },
-        9: { subject: "INFORMATICA", room: "AULA 236" },
-        10: { subject: "ITALIANO", room: "GRAZIA DELEDDA" },
-        11: { subject: "MATEMATICA", room: "INTEGRALE" },
-        12: { subject: "SISTEMI E RETI", room: "AULA 248" }
+      5: {
+        8: { subject: "INFORMATICA", room: "AULA 236", location: "📍 Piano Secondo - Corridoio verde (Aula 236)", image: "http://79.2.211.87:9090/castelli/aule/foto/236.jpg" },
+        9: { subject: "ITALIANO", room: "GRAZIA DELEDDA", location: "📍 Piano Secondo - Satellite (Aula 291)", image: "http://79.2.211.87:9090/castelli/aule/foto/DELEDDA.jpg" },
+        10: { subject: "ITALIANO", room: "GRAZIA DELEDDA", location: "📍 Piano Secondo - Satellite (Aula 291)", image: "http://79.2.211.87:9090/castelli/aule/foto/DELEDDA.jpg" },
+        11: { subject: "MATEMATICA", room: "INTEGRALE", location: "📍 Piano Rialzato - Corridoio blu (Aula 081)", image: "http://79.2.211.87:9090/castelli/aule/foto/INTEGRALE.jpg" },
+        12: { subject: "SISTEMI E RETI", room: "AULA 248", location: "📍 Piano Secondo - Corridoio verde (Aula 248)", image: "http://79.2.211.87:9090/castelli/aule/foto/248.jpg" }
       },
-      6: { // Sabato
-        8: { subject: "TELECOMUNICAZIONI", room: "LAB. ELETTRONICA" },
-        9: { subject: "TELECOMUNICAZIONI", room: "LAB. ELETTRONICA" },
-        10: { subject: "INFORMATICA", room: "AULA 159" },
-        11: { subject: "STORIA", room: "GRAZIA DELEDDA" }
+      6: {
+        8: { subject: "TELECOMUNICAZIONI", room: "LAB. ELETTRONICA", location: "📍 Corridoio blu Secondo piano (Lab. Elettronica)", image: "http://79.2.211.87:9090/castelli/aule/foto/ELETTRONICA.jpg" },
+        9: { subject: "TELECOMUNICAZIONI", room: "LAB. ELETTRONICA", location: "📍 Corridoio blu Secondo piano (Lab. Elettronica)", image: "http://79.2.211.87:9090/castelli/aule/foto/ELETTRONICA.jpg" },
+        10: { subject: "INFORMATICA", room: "AULA 159", location: "📍 Piano Primo - Corridoio verde (Aula 159)", image: "http://79.2.211.87:9090/castelli/aule/foto/159.jpg" },
+        11: { subject: "STORIA", room: "GRAZIA DELEDDA", location: "📍 Piano Secondo - Satellite (Aula 291)", image: "http://79.2.211.87:9090/castelli/aule/foto/DELEDDA.jpg" }
       }
     };
 
     const daysOfWeek = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
 
+    let isManualMode = false;
+    let manualDay = null;
+    let manualHour = null;
+
     function getItalyTime() {
       const now = new Date();
-      // Converte l'orario al fuso italiano Europe/Rome indipendentemente dal server/dispositivo
       const italyDateString = now.toLocaleString("en-US", { timeZone: "Europe/Rome" });
       return new Date(italyDateString);
     }
 
+    function initManualState() {
+      if (!isManualMode) {
+        const now = getItalyTime();
+        manualDay = now.getDay();
+        manualHour = now.getHours();
+        isManualMode = true;
+      }
+    }
+
     function updateScheduleDisplay() {
       const now = getItalyTime();
-      const day = now.getDay();
-      const hour = now.getHours();
+      const currentDay = isManualMode ? manualDay : now.getDay();
+      const currentHour = isManualMode ? manualHour : now.getHours();
 
-      // Formattazione orario a 2 cifre
       const hoursStr = String(now.getHours()).padStart(2, '0');
       const minutesStr = String(now.getMinutes()).padStart(2, '0');
       const secondsStr = String(now.getSeconds()).padStart(2, '0');
@@ -173,18 +414,81 @@
       document.getElementById('clock-class').textContent = timeString;
       document.getElementById('clock-off').textContent = timeString;
 
-      const daySchedule = schedule[day];
+      const daySchedule = schedule[currentDay];
       const screenOff = document.getElementById('screen-off');
+      const btnLive = document.getElementById('btn-live');
 
-      if (daySchedule && daySchedule[hour]) {
-        const currentLesson = daySchedule[hour];
-        document.getElementById('current-day-time').textContent = `${daysOfWeek[day]} - Ore ${hour}:00`;
+      btnLive.style.display = isManualMode ? 'inline-block' : 'none';
+
+      const dayText = `${daysOfWeek[currentDay]} - Ore ${currentHour}:00 ${isManualMode ? '(Manuale)' : ''}`;
+
+      if (daySchedule && daySchedule[currentHour]) {
+        const currentLesson = daySchedule[currentHour];
+
+        document.getElementById('current-day-time').textContent = dayText;
         document.getElementById('subject-name').textContent = currentLesson.subject;
         document.getElementById('room-name').textContent = currentLesson.room;
+        document.getElementById('room-location').textContent = currentLesson.location || "📍 Posizione non specificata";
+
+        const imgElement = document.getElementById('room-image');
+        if (currentLesson.image) {
+          imgElement.src = currentLesson.image;
+          imgElement.style.display = 'block';
+        } else {
+          imgElement.style.display = 'none';
+        }
+
         screenOff.classList.remove('active');
       } else {
+        document.getElementById('off-day-time').textContent = dayText;
+        document.getElementById('off-subject-name').textContent = "Lezioni Terminate 🌙";
+        document.getElementById('off-room-name').textContent = "Nessuna lezione in corso";
         screenOff.classList.add('active');
       }
+    }
+
+    function changeHour(step) {
+      initManualState();
+      manualHour += step;
+
+      if (manualHour > 23) {
+        manualHour = 0;
+        manualDay = (manualDay % 7) + 1;
+      } else if (manualHour < 0) {
+        manualHour = 23;
+        manualDay = (manualDay - 2 + 7) % 7 + 1;
+      }
+
+      updateScheduleDisplay();
+    }
+
+    function openModal() {
+      const now = getItalyTime();
+      const activeDay = isManualMode ? manualDay : (now.getDay() === 0 ? 1 : now.getDay());
+      const activeHour = isManualMode ? manualHour : (now.getHours() < 8 || now.getHours() > 13 ? 8 : now.getHours());
+
+      document.getElementById('select-day').value = activeDay;
+      document.getElementById('select-hour').value = activeHour;
+      document.getElementById('dayModal').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('dayModal').classList.remove('open');
+    }
+
+    function confirmSelection() {
+      isManualMode = true;
+      manualDay = parseInt(document.getElementById('select-day').value);
+      manualHour = parseInt(document.getElementById('select-hour').value);
+      closeModal();
+      updateScheduleDisplay();
+    }
+
+    function resetToLive() {
+      isManualMode = false;
+      manualDay = null;
+      manualHour = null;
+      updateScheduleDisplay();
     }
 
     setInterval(updateScheduleDisplay, 1000);
