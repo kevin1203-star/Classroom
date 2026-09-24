@@ -33,13 +33,13 @@
       transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.8s ease;
     }
 
-    /* Stile per le materie diurne/lezioni */
+    /* Schermata di lezione attiva */
     #screen-class {
       background: linear-gradient(135deg, #1e3c72, #2a5298);
       z-index: 1;
     }
 
-    /* Stile per fine lezioni / intervallo */
+    /* Schermata fuoriorario / intervallo */
     #screen-off {
       background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
       z-index: 2;
@@ -70,7 +70,7 @@
       margin-bottom: 5px;
     }
 
-    #clock {
+    .clock {
       margin-top: 30px;
       font-size: 1.2rem;
       background: rgba(0, 0, 0, 0.3);
@@ -89,21 +89,20 @@
 
   <!-- Schermata Lezione -->
   <div id="screen-class" class="screen">
-    <div class="day-info" id="current-day-time">Lunedì - Ore 08:00</div>
-    <div class="subject" id="subject-name">Materia</div>
-    <div class="room" id="room-name">Aula</div>
-    <div id="clock">00:00:00</div>
+    <div class="day-info" id="current-day-time">Inizializzazione...</div>
+    <div class="subject" id="subject-name">---</div>
+    <div class="room" id="room-name">---</div>
+    <div class="clock" id="clock-class">--:--:--</div>
   </div>
 
-  <!-- Schermata Fuori Orario / Nessuna Lezione -->
+  <!-- Schermata Fuori Orario -->
   <div id="screen-off" class="screen">
     <div class="subject">Lezioni Terminate 🌙</div>
     <div class="room">Nessuna lezione in corso</div>
-    <div id="clock-off">00:00:00</div>
+    <div class="clock" id="clock-off">--:--:--</div>
   </div>
 
   <script>
-    // Tabella Orario della classe 3AI inserita dall'immagine
     const schedule = {
       1: { // Lunedì
         8: { subject: "INGLESE", room: "BRIXTON" },
@@ -153,13 +152,25 @@
 
     const daysOfWeek = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
 
-    function updateScheduleDisplay() {
+    function getItalyTime() {
       const now = new Date();
+      // Converte l'orario al fuso italiano Europe/Rome indipendentemente dal server/dispositivo
+      const italyDateString = now.toLocaleString("en-US", { timeZone: "Europe/Rome" });
+      return new Date(italyDateString);
+    }
+
+    function updateScheduleDisplay() {
+      const now = getItalyTime();
       const day = now.getDay();
       const hour = now.getHours();
 
-      const timeString = now.toLocaleTimeString('it-IT');
-      document.getElementById('clock').textContent = timeString;
+      // Formattazione orario a 2 cifre
+      const hoursStr = String(now.getHours()).padStart(2, '0');
+      const minutesStr = String(now.getMinutes()).padStart(2, '0');
+      const secondsStr = String(now.getSeconds()).padStart(2, '0');
+      const timeString = `${hoursStr}:${minutesStr}:${secondsStr}`;
+
+      document.getElementById('clock-class').textContent = timeString;
       document.getElementById('clock-off').textContent = timeString;
 
       const daySchedule = schedule[day];
@@ -176,7 +187,6 @@
       }
     }
 
-    // Aggiornamento ogni secondo
     setInterval(updateScheduleDisplay, 1000);
     updateScheduleDisplay();
   </script>
